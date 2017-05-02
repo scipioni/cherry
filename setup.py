@@ -14,10 +14,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[],
-    #entry_points={
-    #    'console_scripts':
-    #        ['giano-ocr = gianoocr.process:run',
-    #         'giano-ocr-train = gianoocr.process:train_knn'],
-    #    },
+    entry_points={
+        'console_scripts':
+            ['cherry-run = cherry.process:run']
+        },
 )
 
