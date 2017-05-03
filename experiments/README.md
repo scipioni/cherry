@@ -1,0 +1,3 @@
+- set camera with ./settings
+- capture video with ./capture name.264
+- python test2.py --file name.264

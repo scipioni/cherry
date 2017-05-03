@@ -1,0 +1,11 @@
+#!/bin/sh
+
+SECONDS=5
+NAME=$1
+FRAMERATE=25
+
+#v4l2-ctl --overlay=0
+#v4l2-ctl --set-fmt-video=width=1024,height=768,pixelformat=4
+v4l2-ctl -p $FRAMERATE
+v4l2-ctl --stream-mmap=3 --stream-count=$(($SECONDS * 25)) --stream-to=${NAME}
+

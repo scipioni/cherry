@@ -96,7 +96,7 @@ class Ciliegia:
 
 
 class Detector:
-    def __init__(self, raspberry=True, show=False):
+    def __init__(self, raspberry=True, show=False, filename=''):
         self.show = show
 	self.timer = CvTimer()
         self.raspberry = raspberry
@@ -115,7 +115,7 @@ class Detector:
             print("gains=", g)
             self.rawCapture = PiRGBArray(self.camera, size=(640, 480))
         else:
-            self.cap = cv2.VideoCapture(0)
+            self.cap = cv2.VideoCapture(filename or 0)
         #print("framerate %s" % self.cap.get(cv2.cv.CV_CAP_PROP_FPS))
 
         red = 0 # cv2.cvtColor(np.uint8([[[255,0,0]]]), cv2.COLOR_BGR2HSV)[0]
@@ -249,6 +249,9 @@ class Detector:
     def capture_pc(self):
         while(True):
             ret, frame = self.cap.read()
+            if frame is None:
+                print("no frame")
+                break
             #cv2.imshow('original', frame)
             self.process(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -261,7 +264,8 @@ class Detector:
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("--show", action='store_true', help="show camera")
+    ap.add_argument("--file", default="")
     args = vars(ap.parse_args())
-    detector = Detector(raspberry=False, show=args['show'])
+    detector = Detector(raspberry=False, show=args['show'], filename=args['file'])
     detector.capture()
 
