@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SECONDS=5
+SECONDS=20
 NAME=$1
 FRAMERATE=25
 
