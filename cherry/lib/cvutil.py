@@ -2,6 +2,8 @@
 
 import cv2
 import numpy as np
+import collections
+import time
 
 red=(0,0,255)
 green=(0,255,0)
@@ -9,6 +11,8 @@ blu=(255,0,0)
 yellow=(0,255,255)
 white=(255,255,255)
 black=(0,0,0)
+
+(major, minor, _) = map(int, cv2.__version__.split("."))
 
 _windows = []
 
@@ -84,3 +88,19 @@ def crop(image, size=None, slice=0.33):
     if size:
         return cv2.resize(out, size)
     return out
+
+class CvTimer(object):
+    def __init__(self):
+	self.last = time.time()
+	self.history = collections.deque(maxlen=10)
+
+    @property
+    def fps(self):
+        now = time.time()
+        self.history.append(1.0/(now - self.last))
+        self.last = now
+        return round(sum(self.history)/len(self.history))
+
+    @property
+    def avg_fps(self):
+        return sum(self.l_fps_history) / float(self.fps_len)

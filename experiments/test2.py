@@ -10,24 +10,17 @@ white balance: 2500 (no auto)
 import numpy as np
 import cv2
 import time
-import collections
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import argparse
-
+import collections
 
 
 def draw_text(img, text, y=75, x=10, color=(255,255,0)):
     cv2.putText(img, str(text), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color)
 
-#def circular_counter(max):
-#    """helper function that creates an eternal counter till a max value"""
-#    x = 0
-#    while True:
-#        if x == max:
-#            x = 0
-#        x += 1
-#        yield x
+def nothing(x):
+    pass
 
 class CvTimer(object):
     def __init__(self):
@@ -36,19 +29,16 @@ class CvTimer(object):
 
     @property
     def fps(self):
-	now = time.time()
-	self.history.append(1.0/(now - self.last))
-	self.last = now
-	
-	return round(sum(self.history)/len(self.history))
+        now = time.time()
+        self.history.append(1.0/(now - self.last))
+        self.last = now
+
+	       return round(sum(self.history)/len(self.history))
 
     @property
     def avg_fps(self):
         return sum(self.l_fps_history) / float(self.fps_len)
 
-
-def nothing(x):
-    pass
 
 class Ciliegia:
     def __init__(self):
@@ -60,7 +50,7 @@ class Ciliegia:
         self.fired = False
 
     def update(self, img, hull, x, y, area, y_min):
-        posizione = float(y-y_min)/y_min 
+        posizione = float(y-y_min)/y_min
         if posizione > 0.8:
             print("nuova ciliegia...")
             self.fired = False
@@ -98,7 +88,7 @@ class Ciliegia:
 class Detector:
     def __init__(self, raspberry=True, show=False, filename=''):
         self.show = show
-	self.timer = CvTimer()
+        self.timer = CvTimer()
         self.raspberry = raspberry
         self.whitebalance = 1.9
         self.ciliegia = Ciliegia()
@@ -136,12 +126,12 @@ class Detector:
 
     def erode(self, img, kernel=5):
         kernel_ = np.ones((kernel,kernel),np.uint8)
-        return cv2.erode(img, kernel_, iterations = 1)        
+        return cv2.erode(img, kernel_, iterations = 1)
 
 
     def dilate(self, img, kernel=5):
         kernel_ = np.ones((kernel,kernel),np.uint8)
-        return cv2.dilate(img, kernel_, iterations = 1)        
+        return cv2.dilate(img, kernel_, iterations = 1)
 
     def show_hsv(self, hsv):
         hue, saturation, value = cv2.split(hsv)
@@ -171,13 +161,16 @@ class Detector:
         #return mask1#+mask2
 
         return mask1
-    
+
 
     def calculate(self, img_out, img_mask):
-	contours,hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if cvutil.major >= 3:
+            buff, contours,hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            contours,hierarchy = cv2.findContours(img_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if not contours:
             return
-        
+
         cy_min, cy_max = self.mirino(img_out)
 
         hierarchy = hierarchy[0]
@@ -209,7 +202,7 @@ class Detector:
                 #    area = round(area*1.2)
                 self.ciliegia.update(img_out, hull, cx, cy, area, cy_min)
                 #y += 50
-    
+
 
     def mirino(self, img, delta=0.20):
         height, width = img.shape[:2]
@@ -268,4 +261,3 @@ if __name__ == '__main__':
     args = vars(ap.parse_args())
     detector = Detector(raspberry=False, show=args['show'], filename=args['file'])
     detector.capture()
-
