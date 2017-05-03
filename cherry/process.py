@@ -10,22 +10,48 @@ import argparse
 from cherry.lib import cvutil
 from cherry.ciliegia import Ciliegia
 
+
+class Mirino:
+    def __init__(self, y=0.5, delta=0.20):
+        self.ciliegia = Ciliegia()
+
+    def update(self, img, y=0.5, delta=0.2):
+        """
+            y_min e y_max hanno lo zero nella parte bassa dell'immagine
+        """
+        height, width = img.shape[:2]
+
+        self.y_max = int(height*y+height*delta)
+        self.y_min = int(height*y-height*delta)
+        cv2.rectangle(img, (0,height-self.y_max), (width,height-self.y_min), cvutil.yellow, 2)
+        #return (cy_min, cy_max)
+
 class Detector:
     def __init__(self, show=False, filename=''):
         self.show = show
         self.timer = cvutil.CvTimer()
-        self.ciliegia = Ciliegia()
+
 
         self.cap = cv2.VideoCapture(filename or 0)
         #print("framerate %s" % self.cap.get(cv2.cv.CV_CAP_PROP_FPS))
 
-        self.window = cvutil.Window('result')
-        self.hue_min = self.window.add_trackbar('hue_min', 1, 180, default=2)
-        self.hue_max = self.window.add_trackbar('hue_max', 1, 180, default=22)
-        self.saturation_min = self.window.add_trackbar('saturation_min', 1, 255, default=110)
-        self.saturation_max = self.window.add_trackbar('saturation_max', 1, 255, default=255)
-        self.value_min = self.window.add_trackbar('value_min', 1, 255, default=120)
-        self.value_max = self.window.add_trackbar('value_max', 1, 255, default=255)
+        self.window = cvutil.Window('original')
+        #self.hue_min = self.window.add_trackbar('hue_min', 1, 180, default=2)
+        self.hue_max = self.window.add_trackbar('hue_max', 1, 180, default=25)
+        self.saturation_min = self.window.add_trackbar('saturation_min', 1, 255, default=25)
+        #self.saturation_max = self.window.add_trackbar('saturation_max', 1, 255, default=255)
+        self.value_min = self.window.add_trackbar('value_min', 0, 255, default=0)
+        #self.value_max = self.window.add_trackbar('value_max', 1, 255, default=255)
+        self.w = self.window.add_trackbar('w', 0.2, 0.8, step=0.01, default=0.4)
+        self.w_offset = self.window.add_trackbar('w_offset', 0.0, 0.2, step=0.01, default=0.08)
+        self.mirino1_y = self.window.add_trackbar('mirino1_y', 0.1, 0.8, step=0.01, default=0.35)
+        self.mirino2_y = self.window.add_trackbar('mirino2_y', 0.1, 0.8, step=0.01, default=0.80)
+        self.mirino_h = self.window.add_trackbar('mirino_h', 0.1, 0.8, step=0.01, default=0.12)
+
+        self.window_result = cvutil.Window('result') #, size=(160,600))
+
+        self.mirino1 = Mirino()
+        self.mirino2 = Mirino()
 
     def erode(self, img, kernel=5):
         kernel_ = np.ones((kernel,kernel),np.uint8)
@@ -41,7 +67,7 @@ class Detector:
         cv2.imshow('saturation', saturation)
         cv2.imshow('value', value)
 
-    def detect_object(self, img):
+    def filter_color(self, img):
         #denoise = cv2.fastNlMeansDenoisingColored(img,None,10,10,7,21)
         #small = cv2.resize(img, (0,0), fx=0.5, fy=0.5)
 
@@ -49,11 +75,11 @@ class Detector:
         #cv2.imshow('hsv', hsv)
         #self.show_hsv(hsv)
         mask1 = cv2.inRange(hsv,
-            (self.hue_min.getInt(), self.saturation_min.getInt(), self.value_min.getInt()),
-            (self.hue_max.getInt(), self.saturation_max.getInt(), self.value_max.getInt()),
+            (0, self.saturation_min.getInt(), self.value_min.getInt()),
+            (self.hue_max.getInt(), 255, 255),
             )
-
-        return mask1
+        result = cv2.bitwise_and(img, img, mask=mask1)
+        return result
 
     def calculate(self, img_out, img_mask):
         if cvutil.major >= 3:
@@ -109,46 +135,52 @@ class Detector:
                 self.ciliegia.update(img_out, hull, cx, cy, area, cy_min)
                 #y += 50
 
-
-    def mirino(self, img, delta=0.20):
-        height, width = img.shape[:2]
-        cy_max = int(height/2+height*delta)
-        cy_min = int(height/2-height*delta)
-        cv2.rectangle(img, (0,cy_min), (width,cy_max), (255,0,255), 2)
-        return (cy_min, cy_max)
-
-    def process(self, frame):
-        # crop
+    def crop(self, frame):
+        slice=self.w.get()
+        delta=self.w_offset.get()
         h, w, depth = frame.shape
-        slice=0.40
-        delta=0.08
-        frame = frame[0:h, int(w*(slice+delta)):int(w*(1-slice+delta))]
+        x1 = int(w*(slice+delta))
+        x2 = int(w*(1-slice+delta))
+        result = frame[0:h, x1:x2].copy()
+        cv2.rectangle(frame, (x1-2,0), (x2+2,h), cvutil.blu, 2)
+        return result
 
-
-        mask = self.detect_object(frame)
-        result = cv2.bitwise_and(frame, frame, mask=mask)
-        self.calculate(result, mask)
-        fps = self.timer.fps
-        print("fps=%s" % fps)
-        #cv2.putText(img, "fps=%.0f" % fps, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, cvutil.blue)
-        if self.show:
-            cv2.imshow('result', result)
-
-    def capture(self):
+    def main(self):
         pause = False
+        i=0
         while(True):
             if not pause:
-                ret, frame = self.cap.read()
-            if frame is None:
+                ret, original = self.cap.read()
+            if original is None:
                 print("no frame")
                 break
             #cv2.imshow('original', frame)
-            self.process(frame)
+
+            original_show = original.copy()
+            frame = self.crop(original_show)
+            self.mirino1.update(original_show, y=self.mirino1_y.get(), delta=self.mirino_h.get())
+            self.mirino2.update(original_show, y=self.mirino2_y.get(), delta=self.mirino_h.get())
+
+            frame = self.filter_color(frame)
+
+            #self.calculate(result, mask)
+
+            fps = self.timer.fps
+            if i%10:
+                print("fps=%s" % fps)
+                #cv2.putText(img, "fps=%.0f" % fps, (10, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, cvutil.blue)
+            if self.show:
+                self.window.show(original_show)
+                self.window_result.show(frame)
             key = cv2.waitKey(1)
             if key & 0xFF == ord('q'):
                 break
             elif key & 0xFF == ord(' '):
                 pause = not pause
+
+
+
+            time.sleep(0.1)
 
         self.cap.release()
         cv2.destroyAllWindows()
@@ -159,4 +191,4 @@ def run():
     ap.add_argument("--file", default="")
     args = vars(ap.parse_args())
     detector = Detector(show=args['show'], filename=args['file'])
-    detector.capture()
+    detector.main()

@@ -38,10 +38,15 @@ class Window:
     w=600
     h=400
 
-    def __init__(self, name='img1'):
+    def __init__(self, name='img1', size=None):
         self.name = name
         self.x = self.y = 1
-        cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)
+        #cv2.namedWindow(name, cv2.WINDOW_NORMAL)
+        #return
+        if not size:
+            cv2.namedWindow(name, cv2.WINDOW_NORMAL if size else cv2.WINDOW_AUTOSIZE)
+        if size:
+            cv2.resizeWindow(name, *size)
         if _windows:
             y = _windows[-1].y
             x = _windows[-1].x + self.w
@@ -63,8 +68,9 @@ class Window:
         return Track(name, lower=lower, upper=upper, step=step, default=default, window=self.name)
 
     def show(self, image):
-        smaller = cv2.resize(image, (self.w, self.h))
-        cv2.imshow(self.name, smaller)
+        #smaller = cv2.resize(image, (self.w, self.h))
+        #cv2.imshow(self.name, smaller)
+        cv2.imshow(self.name, image)
 
 def overlay(background, image, x=0, y=0):
     image_color = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
