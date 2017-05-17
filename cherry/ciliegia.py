@@ -62,7 +62,10 @@ class Ciliegia:
 
     def draw(self, img):
         cv2.circle(img, (self.x, self.y), 4, cvutil.yellow, 2)
-        box = cv2.boxPoints(self.rect) # cv2.boxPoints(rect) for OpenCV 3.x
+        if cvutil.major >= 3:
+            box = cv2.boxPoints(self.rect) # cv2.boxPoints(rect) for OpenCV 3.x
+        else:
+            box = cv2.cv.BoxPoints(self.rect)
         box = np.int0(box)
         cv2.drawContours(img, [box], -1, cvutil.green, 1)
         cv2.putText(img, str(self.calibro), (self.x, self.y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, cvutil.yellow)
