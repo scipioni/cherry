@@ -12,7 +12,7 @@ yellow=(0,255,255)
 white=(255,255,255)
 black=(0,0,0)
 
-(major, minor, _) = map(int, cv2.__version__.split("."))
+(major, minor) = map(int, cv2.__version__.split(".")[:2])
 
 _windows = []
 
