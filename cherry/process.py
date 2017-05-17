@@ -6,15 +6,32 @@ import time
 #from picamera.array import PiRGBArray
 #from picamera import PiCamera
 import argparse
+import threading
+
+try:
+    import RPi.GPIO as GPIO
+    GPIO.setwarnings(False)
+    GPIO.cleanup()
+    GPIO.setmode(GPIO.BOARD)
+except:
+    print("NO GPIO available")
+    GPIO=None
 
 from cherry.lib import cvutil
 from cherry.ciliegia import Ciliegia, Ciliegie
 
 
+
 class Mirino:
-    def __init__(self, y=0.5, delta=0.20, calibro=28):
+    def __init__(self, y=0.5, delta=0.20, calibro=28, pin=0, impulse_time=0.1):
         self.calibro = calibro
         self.fired = False
+        self.pin = pin
+        self.impulse_time = impulse_time
+        if pin and GPIO:
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.HIGH) # rele is active LOW
+
 
     def update(self, img, y=0.5, delta=0.2, taratura=1.0):
         """
@@ -38,8 +55,22 @@ class Mirino:
         #return (cy_min, cy_max)
 
     def fire(self):
-        self.fired = True
+        if self.fired:
+            return
         cv2.line(self.img, (0, self.y), (self.width, self.y), cvutil.red, 4)
+        t = threading.Thread(target=self.releOn, args=[])
+        t.start()
+
+    def releOn(self):
+        """ rele is active LOW """
+        if self.pin and GPIO:
+            print("ON pin=%s" % self.pin)
+            GPIO.output(self.pin, GPIO.LOW)
+        time.sleep(self.impulse_time)
+        if self.pin and GPIO:
+            print("OFF pin=%s" % self.pin)
+            GPIO.output(self.pin, GPIO.HIGH)
+        self.fired = False
 
     def contains(self, ciliegia):
         return self.y_top <= ciliegia.y <= self.y_bottom
@@ -71,9 +102,9 @@ class Detector:
 
         self.window_result = cvutil.Window('result') #, size=(160,600))
 
-        self.mirino1 = Mirino(calibro=28)
-        self.mirino2 = Mirino(calibro=26)
-        self.cilieigie = Ciliegie()
+        self.mirino1 = Mirino(calibro=28, pin=11, impulse_time=1)
+        self.mirino2 = Mirino(calibro=26, pin=12, impulse_time=1)
+        #self.ciliegie = Ciliegie()
 
     def erode(self, img, kernel=5):
         kernel_ = np.ones((kernel,kernel),np.uint8)
