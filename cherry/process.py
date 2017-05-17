@@ -92,9 +92,9 @@ class Detector:
         self.value_min = self.window.add_trackbar('value_min', 0, 255, default=0)
         #self.value_max = self.window.add_trackbar('value_max', 1, 255, default=255)
         self.w = self.window.add_trackbar('w', 0.2, 0.8, step=0.01, default=0.41)
-        self.w_offset = self.window.add_trackbar('w_offset', 0.0, 0.2, step=0.01, default=0.08)
+        self.w_offset = self.window.add_trackbar('w_offset', 0.0, 0.2, step=0.01, default=0.04)
         self.mirino_h = self.window.add_trackbar('mirino_h', 0.1, 0.8, step=0.01, default=0.12)
-        self.mirino1_y = self.window.add_trackbar('mirino1_y', 0.1, 0.8, step=0.01, default=0.7)
+        self.mirino1_y = self.window.add_trackbar('mirino1_y', 0.1, 0.8, step=0.01, default=0.63)
         self.mirino2_y = self.window.add_trackbar('mirino2_y', 0.1, 0.8, step=0.01, default=0.2)
 
         self.mirino1_cal = self.window.add_trackbar('mirino1_cal', 150, 230, step=1, default=183)
@@ -102,8 +102,8 @@ class Detector:
 
         self.window_result = cvutil.Window('result') #, size=(160,600))
 
-        self.mirino1 = Mirino(calibro=28, pin=11, impulse_time=1)
-        self.mirino2 = Mirino(calibro=26, pin=12, impulse_time=1)
+        self.mirino1 = Mirino(calibro=10, pin=11, impulse_time=0.1)
+        self.mirino2 = Mirino(calibro=26, pin=12, impulse_time=0.1)
         #self.ciliegie = Ciliegie()
 
     def erode(self, img, kernel=5):
@@ -140,7 +140,8 @@ class Detector:
         """
         grey = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         (buff, threshold) = cv2.threshold(grey, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-        cv2.imshow('black', threshold)
+        if self.show:
+            cv2.imshow('black', threshold)
 
         if cvutil.major >= 3:
             buff, contours, hierarchy = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
