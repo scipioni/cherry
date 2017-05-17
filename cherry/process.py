@@ -95,15 +95,15 @@ class Detector:
         self.w_offset = self.window.add_trackbar('w_offset', 0.0, 0.2, step=0.01, default=0.04)
         self.mirino_h = self.window.add_trackbar('mirino_h', 0.1, 0.8, step=0.01, default=0.12)
         self.mirino1_y = self.window.add_trackbar('mirino1_y', 0.1, 0.8, step=0.01, default=0.63)
-        self.mirino2_y = self.window.add_trackbar('mirino2_y', 0.1, 0.8, step=0.01, default=0.2)
+        self.mirino2_y = self.window.add_trackbar('mirino2_y', 0.1, 0.8, step=0.01, default=0.25)
 
-        self.mirino1_cal = self.window.add_trackbar('mirino1_cal', 150, 230, step=1, default=183)
-        self.mirino2_cal = self.window.add_trackbar('mirino2_cal', 150, 230, step=1, default=200)
+        self.mirino1_cal = self.window.add_trackbar('mirino1_cal', 150, 230, step=1, default=203)
+        self.mirino2_cal = self.window.add_trackbar('mirino2_cal', 150, 230, step=1, default=213)
 
         self.window_result = cvutil.Window('result') #, size=(160,600))
 
-        self.mirino1 = Mirino(calibro=10, pin=11, impulse_time=0.1)
-        self.mirino2 = Mirino(calibro=26, pin=12, impulse_time=0.1)
+        self.mirino1 = Mirino(calibro=28, pin=11, impulse_time=0.2)
+        self.mirino2 = Mirino(calibro=24, pin=12, impulse_time=0.2)
         #self.ciliegie = Ciliegie()
 
     def erode(self, img, kernel=5):
