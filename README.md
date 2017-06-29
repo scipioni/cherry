@@ -1,5 +1,6 @@
 # setup virtualenv
-sudo apt install python-virtualenv
+sudo apt install -y python-virtualenv
+sudo apt install -y python-opencv
 virtualenv lib
 . lib/bin/activate
 python setup.py develop
