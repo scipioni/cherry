@@ -1,12 +1,17 @@
-# setup virtualenv
+## setup virtualenv
 sudo apt install -y python-virtualenv
 sudo apt install -y python-opencv
 #create home lib directory
 virtualenv --system-site-packages lib
 . lib/bin/activate
+
+#install package in my custom virtualenv
 python setup.py develop
 
-# normal usage
+##
+
+
+## normal usage
 . lib/bin/activate
 
 # debug
