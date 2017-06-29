@@ -2,7 +2,7 @@
 sudo apt install -y python-virtualenv
 sudo apt install -y python-opencv
 #create home lib directory
-virtualenv lib
+virtualenv --system-site-packages lib
 . lib/bin/activate
 python setup.py develop
 
